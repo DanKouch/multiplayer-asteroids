@@ -1,120 +1,118 @@
+"use strict";
+
 // Config
-const COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"]
+const COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"];
 const MAX_PLAYERS_PER_SESSION = 8;
 
 // Imports
-var express = require('express')
-var shortId = require('shortid')
-var escape = require('escape-html')
-var profanityCensor = require('profanity-censor')
-var app = express()
+const express = require('express');
+const shortId = require('shortid');
+const escape = require('escape-html');
+const profanityCensor = require('profanity-censor');
+const app = express();
 
 // Webserver Connections
-app.set('port', process.env.PORT || 3000)
+app.set('port', process.env.PORT || 3000);
 
-var server = app.listen(app.get('port'), function () {
-  console.log('HTTP server running on port ' + app.get('port'))
-})
+const server = app.listen(app.get('port'), function () {
+  console.log('HTTP server running on port ' + app.get('port'));
+});
 
-var io = require('socket.io').listen(server)
+const io = require('socket.io').listen(server);
 
-app.use(express.static('public'))
+app.use(express.static('public'));
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html')
-})
+  res.sendFile(__dirname + '/index.html');
+});
 
 // Websocket Connections
 io.on('connection', function(socket){
   socket.on('username', function(unsafeUsername){
-    var safeUsername = profanityCensor.filter(escape(unsafeUsername))
+    let safeUsername = profanityCensor.filter(escape(unsafeUsername));
     if(usernameOk(safeUsername)){
-      socket.playerInfo = {username:safeUsername}
-      getSessionToJoin(socket).addClient(socket)
-      socket.on('disconnect', function(){
-        console.log("Client '" + safeUsername + "' disconnected")
-      })
+      getSessionToJoin(socket).addClient(socket, safeUsername);
     }else{
-      socket.emit("err", "Bad username")
+      socket.emit("err", "Bad username");
     }
   })
 })
 
 function usernameOk(username){
-  return (username.trim() !== "" && username !== "null")
+  return (username.trim() !== "" && username !== "null");
 }
 
 function getSessionToJoin(socket){
-  for(var i = 0; i < sessions.length; i++){
-    if(sessions[i].clients.length < MAX_PLAYERS_PER_SESSION){
-      return sessions[i]
-    }
+  let sessionToConnect = sessions.find((session) => session.clients.length < MAX_PLAYERS_PER_SESSION);
+  if(!sessionToConnect){
+    sessionToConnect = sessions[sessions.push(new session())-1];
   }
-  return sessions[sessions.push(new session)-1]
+  return sessionToConnect;
 }
 
 // Set up sessions
 function session(){
-  this.id = shortId.generate()
-  this.clients = []
-  this.tick = setInterval(this.sendPackets.bind(this), 10)
+  this.id = shortId.generate();
+  this.clients = [];
+  this.tick = setInterval(this.sendPackets.bind(this), 10);
 
-  console.log("New session created with id " + this.id)
+  console.log("New session created with id " + this.id);
 }
 
-session.prototype.addClient = function(socket){
-  var index = this.clients.push(socket)
-  socket.playerInfo.color = COLORS[index-1]
-  socket.playerInfo.id = shortId.generate()
+session.prototype.addClient = function(socket, username){
 
-  console.log("User " + socket.playerInfo.username + " (" + socket.playerInfo.id + ") connected to session " + this.id)
+  // Actually add the user
+  let index = this.clients.push(socket);
 
+  // Configure player information
+  socket.publicPlayerInfo = {
+    username: username,
+    color: COLORS[index-1],
+    id: shortId.generate(),
+    position: {
+      x: 0,
+      y: 0
+    }
+  };
 
+  socket.privatePlayerInfo = {
+    health: 100
+  }
+
+  console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
 
   // Gather client controls
-  var sessionID = this.id
+  let sessionID = this.id;
+  let clients = this.clients;
 
   socket.on('key press event', function(e){
-    shortId.generate()
-    console.log("User " + socket.playerInfo.username + " (" + socket.playerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key)
-  })
+    shortId.generate();
+    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key);
+  });
 
   socket.on('mouse press event', function(e){
-    console.log("User " + socket.playerInfo.username + " (" + socket.playerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse")
-  })
+    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse");
+  });
+
+  socket.on('disconnect', function(){
+    clients.splice(clients.indexOf(socket));
+    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has disconnected");
+  });
 }
 
 // Session object declaration
 session.prototype.sendPackets = function(){
-  for(var i = 0; i < this.clients.length; i++){
-
-    var personalPlayerPacket = []
-    for(var x = 0; x < this.clients.length; x++){
-      if(this.clients[i].playerInfo.id !== this.clients[x].playerInfo.id){
-        personalPlayerPacket.push({
-          username: this.clients[x].playerInfo.username,
-          color: this.clients[x].playerInfo.color,
-          id: this.clients[x].playerInfo.id,
-          x: 0,
-          y: 0
-        })
+  this.clients.forEach((clientToSendTo) => {
+    clientToSendTo.emit("server packet", {
+      players: this.clients.filter((x) => (x.id !== clientToSendTo.id)).map((x) => x.publicPlayerInfo),
+      sessionID: this.id,
+      you: {
+        publicPlayerInfo: clientToSendTo.publicPlayerInfo,
+        privatePlayerInfo: clientToSendTo.privatePlayerInfo
       }
-    }
+    });
+  });
 
-    this.clients[i].emit("server packet", {
-        players: personalPlayerPacket,
-        sessionID: this.id,
-        you: {
-          username: this.clients[i].playerInfo.username,
-          color: this.clients[i].playerInfo.color,
-          id: this.clients[i].playerInfo.id,
-          x: 0,
-          y: 0,
-          health: 0
-        }
-    })
-  }
 }
 
-
-var sessions = [new session()]
+const sessions = [new session()];

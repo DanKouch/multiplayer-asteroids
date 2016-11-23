@@ -10,8 +10,8 @@
   "author": "Daniel Kouchekinia",
   "license": "ISC",
   "engines": {
-    "node": "0.12.4",
-    "npm": "2.10.1"
+    "node": "^6.9.1",
+    "npm": "^3.10.8"
   },
   "dependencies": {
     "escape-html": "^1.0.3",
