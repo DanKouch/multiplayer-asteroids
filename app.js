@@ -83,7 +83,7 @@ function getSessionToJoin(socket){
 function session(){
   this.id = shortId.generate();
   this.clients = [];
-  this.tick = setInterval(this.sendPackets.bind(this), 10);
+  this.tick = setInterval(this.logic.bind(this), 10);
 
   console.log("New session created with id " + this.id);
 }
@@ -105,7 +105,16 @@ session.prototype.addClient = function(socket, username){
   };
 
   socket.privatePlayerInfo = {
-    health: 100
+    health: 100,
+    velocity: {
+      x: 0,
+      y: 0
+    }
+  }
+
+  socket.keysPressed = [];
+  socket.mouseInfo = {
+    pressed: false
   }
 
   console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
@@ -117,10 +126,21 @@ session.prototype.addClient = function(socket, username){
   socket.on('key press event', function(e){
     shortId.generate();
     console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key);
+
+    if(e.pressed){
+      if(socket.keysPressed.indexOf(e.key) === -1){
+		  	socket.keysPressed.push(e.key);
+		  }
+    }else{
+      if(socket.keysPressed.indexOf(e.key) !== -1){
+		  	socket.keysPressed.splice(socket.keysPressed.indexOf(e.key));
+		  }
+    }
   });
 
   socket.on('mouse press event', function(e){
     console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse");
+    socket.mouseInfo.pressed = e.pressed;
   });
 
   socket.on('disconnect', function(){
@@ -145,7 +165,49 @@ session.prototype.sendPackets = function(){
 }
 
 session.prototype.canJoin = function(){
-  return this.clients.length < MAX_PLAYERS_PER_SESSION
+  return this.clients.length < MAX_PLAYERS_PER_SESSION;
+}
+
+session.prototype.logic = function(){
+  this.clients.forEach((player) => {
+    if(player.keysPressed.indexOf("W") !== -1){
+      player.privatePlayerInfo.velocity.y-=0.2;
+    }
+    if(player.keysPressed.indexOf("A") !== -1){
+      player.privatePlayerInfo.velocity.x-=0.2;
+    }
+    if(player.keysPressed.indexOf("S") !== -1){
+      player.privatePlayerInfo.velocity.y+=0.2;
+    }
+    if(player.keysPressed.indexOf("D") !== -1){
+      player.privatePlayerInfo.velocity.x+=0.2;
+    }
+
+    if(player.privatePlayerInfo.velocity.x > 0){
+      player.privatePlayerInfo.velocity.x -= 0.05;
+    }else if(player.privatePlayerInfo.velocity.x < 0){
+      player.privatePlayerInfo.velocity.x += 0.05;
+    }
+
+    if(player.privatePlayerInfo.velocity.y > 0){
+      player.privatePlayerInfo.velocity.y -= 0.05;
+    }else if(player.privatePlayerInfo.velocity.y < 0){
+      player.privatePlayerInfo.velocity.y += 0.05;
+    }
+
+    if(Math.abs(player.privatePlayerInfo.velocity.x) <= 0.05){
+      player.privatePlayerInfo.velocity.x = 0;
+    }
+
+    if(Math.abs(player.privatePlayerInfo.velocity.y) <= 0.05){
+      player.privatePlayerInfo.velocity.y = 0;
+    }
+
+    player.publicPlayerInfo.position.x += player.privatePlayerInfo.velocity.x;
+    player.publicPlayerInfo.position.y += player.privatePlayerInfo.velocity.y;
+  });
+
+  this.sendPackets();
 }
 
 const sessions = [new session()];
