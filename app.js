@@ -8,6 +8,8 @@ const escape = require('escape-html');
 const profanityCensor = require('profanity-censor');
 const app = express();
 
+const sessions = [];
+
 // Webserver Connections
 app.set('port', process.env.PORT || 3000);
 
@@ -113,12 +115,10 @@ session.prototype.addClient = function(socket, username){
   console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
 
   // Gather client controls
-  let sessionID = this.id;
-  let clients = this.clients;
+  let _this = this;
 
   socket.on('key press event', function(e){
     shortId.generate();
-    //console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key);
 
     if(e.pressed){
       if(socket.keysPressed.indexOf(e.key) === -1){
@@ -126,19 +126,22 @@ session.prototype.addClient = function(socket, username){
 		  }
     }else{
       if(socket.keysPressed.indexOf(e.key) !== -1){
-		  	socket.keysPressed.splice(socket.keysPressed.indexOf(e.key));
+		  	socket.keysPressed.splice(socket.keysPressed.indexOf(e.key), 1);
 		  }
     }
   });
 
   socket.on('mouse press event', function(e){
-    //console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse");
     socket.mouseInfo.pressed = e.pressed;
   });
 
   socket.on('disconnect', function(){
-    clients.splice(clients.indexOf(socket));
-    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has disconnected");
+    _this.clients.splice(_this.clients.indexOf(socket), 1);
+    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + _this.id + " has disconnected");
+    if(_this.clients.length < 1){
+      sessions.splice(sessions.indexOf(_this), 1);
+      console.log("Session with id " + _this.id + " has been deleted");
+    }
   });
 }
 
@@ -233,5 +236,3 @@ session.prototype.logic = function(){
 
   this.sendPackets();
 }
-
-const sessions = [new session()];

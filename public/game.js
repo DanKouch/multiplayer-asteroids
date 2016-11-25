@@ -69,21 +69,24 @@ $(function(){
   	document.addEventListener("keydown", function(e){
   	   if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) === -1){
   	  	keysPressed.push(String.fromCharCode(e.keyCode));
-        console.log("E");
+
   	    socket.emit("key press event", {
           key: String.fromCharCode(e.keyCode),
           pressed: true
         })
+
   	  }
   	})
 
   	document.addEventListener("keyup", function(e){
+      console.log(keysPressed)
   	  if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) !== -1){
-  	  	keysPressed.splice(keysPressed.indexOf(String.fromCharCode(e.keyCode)));
+  	  	keysPressed.splice(keysPressed.indexOf(String.fromCharCode(e.keyCode)), 1);
         socket.emit("key press event", {
           key: String.fromCharCode(e.keyCode),
           pressed: false
         });
+        console.log(keysPressed);
   	  }
   	});
 
@@ -105,6 +108,7 @@ $(function(){
       g.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
+
 
     g.mozImageSmoothingEnabled = false;
     g.webkitImageSmoothingEnabled = false;
