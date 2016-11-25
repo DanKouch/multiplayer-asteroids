@@ -1,5 +1,12 @@
 "use strict";
 
+// Load images
+var images = {};
+images.playerSpritesheet = new Image();
+images.playerSpritesheet.src = "./images/PlayerSpritesheet.png"
+images.selectorSpritesheet = new Image();
+images.selectorSpritesheet.src = "./images/SelectorSpritesheet.png"
+
 $(function(){
   // Set up view
   var canvas = document.getElementById("gameCanvas");
@@ -47,7 +54,7 @@ $(function(){
       // Don't log every received packet: too much information
       packetCount++;
       if(packetCount > 15){
-        console.log(serverPacket);
+        //console.log(serverPacket);
         packetCount = 0;
       }
       currentServerPacket = serverPacket;
@@ -60,8 +67,9 @@ $(function(){
     var keysPressed = [];
 
   	document.addEventListener("keydown", function(e){
-  	  if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) === -1){
+  	   if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) === -1){
   	  	keysPressed.push(String.fromCharCode(e.keyCode));
+        console.log("E");
   	    socket.emit("key press event", {
           key: String.fromCharCode(e.keyCode),
           pressed: true
@@ -98,17 +106,24 @@ $(function(){
       return;
     }
 
-    let scale = canvas.height/50;
+    g.mozImageSmoothingEnabled = false;
+    g.webkitImageSmoothingEnabled = false;
+    g.msImageSmoothingEnabled = false;
+    g.imageSmoothingEnabled = false;
+
+    var scale = canvas.height/15;
 
     g.fillStyle = "#000";
     g.fillRect(0, 0, canvas.width, canvas.height);
 
-    g.fillStyle = currentServerPacket.you.publicPlayerInfo.color;
-    g.fillRect(currentServerPacket.you.publicPlayerInfo.position.x-scale/2, currentServerPacket.you.publicPlayerInfo.position.y-scale/2, scale, scale);
+    var center = {
+      x: currentServerPacket.you.publicPlayerInfo.position.x - canvas.width/2,
+      y: currentServerPacket.you.publicPlayerInfo.position.y - canvas.height/2
+    }
 
-    currentServerPacket.players.forEach((player) => {
-      g.fillStyle = player.color;
-      g.fillRect(player.position.x-scale/2, player.position.y-scale/2, scale, scale);
+    currentServerPacket.players.concat(currentServerPacket.you.publicPlayerInfo).forEach((player) => {
+      g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, (player.position.x-scale/2)-center.x, (player.position.y-scale/2)-center.y, scale, scale);
+      g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, (player.position.x-scale/2)-center.x, (player.position.y-scale/2)-center.y, scale, scale);
     });
 
     // Draw GUI

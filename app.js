@@ -1,10 +1,7 @@
 "use strict";
 
-// Config
-const COLORS = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"];
-const MAX_PLAYERS_PER_SESSION = 8;
-
 // Imports
+const config = require("./config.js");
 const express = require('express');
 const shortId = require('shortid');
 const escape = require('escape-html');
@@ -54,11 +51,6 @@ io.on('connection', function(socket){
       // "Default" Option
       sessionToJoin = getSessionToJoin(socket);
     }
-    if(usernameOk(safeUsername)){
-
-    }else{
-
-    }
 
     if(loginResponse.successful){
       sessionToJoin.addClient(socket, safeUsername);
@@ -72,7 +64,7 @@ function usernameOk(username){
 }
 
 function getSessionToJoin(socket){
-  let sessionToConnect = sessions.find((session) => session.clients.length < MAX_PLAYERS_PER_SESSION);
+  let sessionToConnect = sessions.find((session) => session.clients.length < config.maxPlayersPerSession);
   if(!sessionToConnect){
     sessionToConnect = sessions[sessions.push(new session())-1];
   }
@@ -90,13 +82,11 @@ function session(){
 
 session.prototype.addClient = function(socket, username){
 
-  // Actually add the user
-  let index = this.clients.push(socket);
-
   // Configure player information
   socket.publicPlayerInfo = {
     username: username,
-    color: COLORS[index-1],
+    colorIdentifier: this.getColorIdentifier(),
+    directionIdentifier: 0,
     id: shortId.generate(),
     position: {
       x: 0,
@@ -117,6 +107,9 @@ session.prototype.addClient = function(socket, username){
     pressed: false
   }
 
+  // Actually add the user
+  let index = this.clients.push(socket);
+
   console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
 
   // Gather client controls
@@ -125,7 +118,7 @@ session.prototype.addClient = function(socket, username){
 
   socket.on('key press event', function(e){
     shortId.generate();
-    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key);
+    //console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " key " + e.key);
 
     if(e.pressed){
       if(socket.keysPressed.indexOf(e.key) === -1){
@@ -139,7 +132,7 @@ session.prototype.addClient = function(socket, username){
   });
 
   socket.on('mouse press event', function(e){
-    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse");
+    //console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + sessionID + " has " + (e.pressed ? "pressed" : "released") + " their mouse");
     socket.mouseInfo.pressed = e.pressed;
   });
 
@@ -165,41 +158,72 @@ session.prototype.sendPackets = function(){
 }
 
 session.prototype.canJoin = function(){
-  return this.clients.length < MAX_PLAYERS_PER_SESSION;
+  return this.clients.length < config.maxPlayersPerSession;
+}
+
+session.prototype.getColorIdentifier = function(){
+  let possibilities = [];
+  for(let i = 0; i < config.maxPlayersPerSession; i++){
+    possibilities.push(i);
+  }
+  let alreadyUsed = this.clients.map((x) => x.publicPlayerInfo.colorIdentifier);
+  let yetToBeUsed = possibilities.filter((y) => alreadyUsed.indexOf(y) === -1);
+  return yetToBeUsed[Math.floor(Math.random() * yetToBeUsed.length)];
 }
 
 session.prototype.logic = function(){
   this.clients.forEach((player) => {
+
+    /*
+    Direction Identifiers:
+    IDLE: 0
+    UP: 4
+    DOWN: 1
+    LEFT: 2
+    RIGHT: 3
+    */
+
+    let lastPressed = player.keysPressed.slice().reverse().find((key) => ["W", "A", "S", "D"].indexOf(key) !== -1);
+
+    if(lastPressed === "W"){
+      player.publicPlayerInfo.directionIdentifier = 4;
+    }else if(lastPressed === "A"){
+      player.publicPlayerInfo.directionIdentifier = 2;
+    }else if(lastPressed === "S"){
+      player.publicPlayerInfo.directionIdentifier = 1;
+    }else if(lastPressed === "D"){
+      player.publicPlayerInfo.directionIdentifier = 3;
+    }else{
+      player.publicPlayerInfo.directionIdentifier = 0;
+    }
+
     if(player.keysPressed.indexOf("W") !== -1){
-      player.privatePlayerInfo.velocity.y-=0.2;
+      player.privatePlayerInfo.velocity.y-=config.jetpackPower;
     }
     if(player.keysPressed.indexOf("A") !== -1){
-      player.privatePlayerInfo.velocity.x-=0.2;
+      player.privatePlayerInfo.velocity.x-=config.jetpackPower;
     }
     if(player.keysPressed.indexOf("S") !== -1){
-      player.privatePlayerInfo.velocity.y+=0.2;
+      player.privatePlayerInfo.velocity.y+=config.jetpackPower;
     }
     if(player.keysPressed.indexOf("D") !== -1){
-      player.privatePlayerInfo.velocity.x+=0.2;
+      player.privatePlayerInfo.velocity.x+=config.jetpackPower;
     }
 
     if(player.privatePlayerInfo.velocity.x > 0){
-      player.privatePlayerInfo.velocity.x -= 0.05;
+      player.privatePlayerInfo.velocity.x -= config.ambientFriction;
     }else if(player.privatePlayerInfo.velocity.x < 0){
-      player.privatePlayerInfo.velocity.x += 0.05;
+      player.privatePlayerInfo.velocity.x += config.ambientFriction;
     }
 
     if(player.privatePlayerInfo.velocity.y > 0){
-      player.privatePlayerInfo.velocity.y -= 0.05;
+      player.privatePlayerInfo.velocity.y -= config.ambientFriction;
     }else if(player.privatePlayerInfo.velocity.y < 0){
-      player.privatePlayerInfo.velocity.y += 0.05;
+      player.privatePlayerInfo.velocity.y += config.ambientFriction;
     }
 
-    if(Math.abs(player.privatePlayerInfo.velocity.x) <= 0.05){
+    if(Math.abs(player.privatePlayerInfo.velocity.x) <= config.ambientFriction && Math.abs(player.privatePlayerInfo.velocity.y) <= config.ambientFriction){
       player.privatePlayerInfo.velocity.x = 0;
-    }
-
-    if(Math.abs(player.privatePlayerInfo.velocity.y) <= 0.05){
       player.privatePlayerInfo.velocity.y = 0;
     }
 
