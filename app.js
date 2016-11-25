@@ -28,13 +28,42 @@ app.get('/', function(req, res){
 
 // Websocket Connections
 io.on('connection', function(socket){
-  socket.on('username', function(unsafeUsername){
-    let safeUsername = profanityCensor.filter(escape(unsafeUsername));
-    if(usernameOk(safeUsername)){
-      getSessionToJoin(socket).addClient(socket, safeUsername);
-    }else{
-      socket.emit("err", "Bad username");
+  socket.on('login', function(loginObject){
+    let loginResponse = {
+      successful: true
+    };
+
+    // Check usernmame
+    let safeUsername = profanityCensor.filter(escape(loginObject.username));
+    if(!usernameOk(safeUsername)){
+      loginResponse.successful = false;
+      loginResponse.usernameError = "Please select another username."
     }
+
+    let sessionToJoin;
+    if(loginObject.sessionId.trim() !== ""){
+      // Custom session option
+      sessionToJoin = sessions.find((x) => {
+        return (x.id === loginObject.sessionId.trim()) && x.canJoin();
+      });
+      if(sessionToJoin === undefined){
+        loginResponse.successful = false;
+        loginResponse.sessionIdError = "No session with that ID exists."
+      }
+    } else {
+      // "Default" Option
+      sessionToJoin = getSessionToJoin(socket);
+    }
+    if(usernameOk(safeUsername)){
+
+    }else{
+
+    }
+
+    if(loginResponse.successful){
+      sessionToJoin.addClient(socket, safeUsername);
+    }
+    socket.emit("login response", loginResponse);
   })
 })
 
@@ -113,6 +142,10 @@ session.prototype.sendPackets = function(){
     });
   });
 
+}
+
+session.prototype.canJoin = function(){
+  return this.clients.length < MAX_PLAYERS_PER_SESSION
 }
 
 const sessions = [new session()];

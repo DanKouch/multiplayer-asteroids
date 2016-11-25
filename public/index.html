@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Multiplayer Astroids</title>
+    <title>-={ Multiplayer Asteroids }=-</title>
     <link rel="stylesheet" type="text/css" href="style.css"/>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="socket.io/socket.io.js"></script>
@@ -12,8 +12,16 @@
     <canvas id="gameCanvas">
       Your browser does not support canvas. Please make sure you'r browser is updated and is in fact not a reminent of the stone age (Internet Explorer).
     </canvas>
-    <!--<div id="lobbyDiv"
-      <p id="info"></p>
+    <div id="loginDiv">
+      <h1 id="title">Multiplayer Asteroids</h1>
+      <p>Username:</p>
+      <input id="usernameInput" type="text" name="username" size=30 value="Dave">
+      <p class="errorText" id="usernameErrorText"></p>
+      <p>Session ID:</p>
+      <input id="sessionIdInput" type="text" name="sessionid" size=30 placeholder="Optional">
+      <p class="errorText" id="sessionIdErrorText"></p>
+      <br>
+      <button id="connectButton" type="button">Connect</button>
     </div>
-  </body>-->
+  </body>
 </html>

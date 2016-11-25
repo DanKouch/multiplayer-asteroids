@@ -1,0 +1,75 @@
+#loginDiv {
+  position: absolute;
+  width: 420px;
+  height: 400px;
+  background-color: #213047;
+
+  border-radius: 3px;
+
+  top:0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  margin: auto;
+
+  color: white;
+  padding-left: 10px;
+  font-family: Helvetica;
+}
+
+h1#title {
+  margin-top: 30px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+p {
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+p.errorText {
+  color: red;
+  margin-top: 3px;
+  margin-left: 5px;
+  font-size: 14px;
+  font-style: italic;
+}
+
+button#connectButton {
+  margin-top: 40px;
+  width: 40%;
+  height: 40px;
+  margin-left: 30%;
+  margin-right: 30%;
+  border-radius: 3px;
+  background-color: white;
+  border: 1px solid #ccc;
+  font-size: 18px;
+}
+
+button#connectButton:active {
+  color: black;
+  margin-top: 43px;
+}
+
+input {
+  font-size: 18px;
+  padding: 3px;
+  border: 1px solid #ccc;
+  margin: 1px;
+  border-radius: 2px;
+  width: 95%;
+}
+
+input:focus {
+  outline: none;
+  margin: 0px;
+  border: 2px solid #1a6df2;
+}
+
+input.error {
+  border: 2px solid #ad1111;
+  margin: 0px;
+}
