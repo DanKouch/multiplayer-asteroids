@@ -61,14 +61,7 @@ $(function(){
 
   // Handle all server connections after login is complete
   function manageConnection(){
-    var packetCount = 0;
     socket.on('server packet', function(serverPacket){
-      // Don't log every received packet: too much information
-      packetCount++;
-      if(packetCount > 15){
-        //console.log(serverPacket);
-        packetCount = 0;
-      }
       currentServerPacket = serverPacket;
     });
 
