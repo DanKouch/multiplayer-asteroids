@@ -6,7 +6,13 @@ const express = require('express');
 const shortId = require('shortid');
 const escape = require('escape-html');
 const profanityCensor = require('profanity-censor');
+const winston = require("winston");
 const app = express();
+
+// Set up logging
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.Console, {'timestamp':true});
+winston.add(winston.transports.File, { filename: 'multiplayerAsteroids.log', 'timestamp':true});
 
 const sessions = [];
 
@@ -14,7 +20,7 @@ const sessions = [];
 app.set('port', process.env.PORT || 3000);
 
 const server = app.listen(app.get('port'), function () {
-  console.log('HTTP server running on port ' + app.get('port'));
+  winston.info('HTTP server running on port ' + app.get('port'));
 });
 
 const io = require('socket.io').listen(server);
@@ -79,7 +85,7 @@ function session(){
   this.clients = [];
   this.tick = setInterval(this.logic.bind(this), 10);
 
-  console.log("New session created with id " + this.id);
+  winston.info("New session created with id " + this.id);
 }
 
 session.prototype.addClient = function(socket, username){
@@ -112,7 +118,7 @@ session.prototype.addClient = function(socket, username){
   // Actually add the user
   let index = this.clients.push(socket);
 
-  console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
+  winston.info("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") connected to session " + this.id);
 
   // Gather client controls
   let _this = this;
@@ -137,10 +143,10 @@ session.prototype.addClient = function(socket, username){
 
   socket.on('disconnect', function(){
     _this.clients.splice(_this.clients.indexOf(socket), 1);
-    console.log("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + _this.id + " has disconnected");
+    winston.info("User " + socket.publicPlayerInfo.username + " (" + socket.publicPlayerInfo.id + ") on session " + _this.id + " has disconnected");
     if(_this.clients.length < 1){
       sessions.splice(sessions.indexOf(_this), 1);
-      console.log("Session with id " + _this.id + " has been deleted");
+      winston.info("Session with id " + _this.id + " has been deleted");
     }
   });
 }

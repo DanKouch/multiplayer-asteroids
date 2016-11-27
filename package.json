@@ -18,6 +18,7 @@
     "express": "^4.14.0",
     "profanity-censor": "^1.0.4",
     "shortid": "^2.2.6",
-    "socket.io": "^1.5.1"
+    "socket.io": "^1.5.1",
+    "winston": "^2.3.0"
   }
 }

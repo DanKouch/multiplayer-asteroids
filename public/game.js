@@ -38,8 +38,20 @@ $(function(){
         $("#gameCanvas").fadeIn(300);
         manageConnection();
       }else{
-        $("#usernameErrorText").text(response.usernameError);
-        $("#sessionIdErrorText").text(response.sessionIdError);
+        if(response.usernameError !== undefined){
+          $("#usernameErrorText").html(response.usernameError);
+          $("#usernameInput").addClass("error");
+        }else{
+          $("#usernameErrorText").html("&nbsp;");
+          $("#usernameInput").removeClass("error");
+        }
+        if(response.sessionIdError !== undefined){
+          $("#sessionIdErrorText").html(response.sessionIdError);
+          $("#sessionIdInput").addClass("error");
+        }else{
+          $("#sessionIdErrorText").html("&nbsp;");
+          $("#sessionIdInput").removeClass("error");
+        }
         $("#connectButton").prop('disabled', false);
       }
     });
@@ -79,14 +91,12 @@ $(function(){
   	})
 
   	document.addEventListener("keyup", function(e){
-      console.log(keysPressed)
   	  if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) !== -1){
   	  	keysPressed.splice(keysPressed.indexOf(String.fromCharCode(e.keyCode)), 1);
         socket.emit("key press event", {
           key: String.fromCharCode(e.keyCode),
           pressed: false
         });
-        console.log(keysPressed);
   	  }
   	});
 
@@ -132,19 +142,27 @@ $(function(){
 
     // Draw GUI
     g.fillStyle = "#fff";
-    g.font = "72px Helvetica";
-    g.fillText(currentServerPacket.you.publicPlayerInfo.username, 10, canvas.height - 70);
+    g.font = "56px PressStart2P";
+    g.fillText(truncate(currentServerPacket.you.publicPlayerInfo.username, 10), 10, canvas.height - 60);
 
-    g.font = "42px Helvetica";
+    g.font = "32px PressStart2P";
     g.fillText("Health: " + currentServerPacket.you.privatePlayerInfo.health + "/100", 10, canvas.height - 20);
 
-    g.font = "14px Helvetica";
-    g.fillText("Session ID: " + currentServerPacket.sessionID, canvas.width - 170, canvas.height - 10);
+    g.font = "12px PressStart2P";
+    g.fillText("Session ID: " + currentServerPacket.sessionID, canvas.width - 270, canvas.height - 10);
 
     if(!socket.connected){
       g.fillStyle = "#f00";
-      g.font = "24px Helvetica";
-      g.fillText("Lost connection with server", canvas.width - 300, 30);
+      g.font = "16px PressStart2P";
+      g.fillText("Lost connection with server", canvas.width - 450, 30);
     }
   }
 });
+
+function truncate(str, length){
+  if(str.length <= length){
+    return str;
+    alert();
+  }
+  return str.substring(0, length).concat("...");
+}
