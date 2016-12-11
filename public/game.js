@@ -140,8 +140,8 @@ $(function(){
     g.fillRect(0, 0, canvas.width, canvas.height);
 
     var center = {
-      x: currentServerPacket.you.publicPlayerInfo.position.x - canvas.width/2,
-      y: currentServerPacket.you.publicPlayerInfo.position.y - canvas.height/2
+      x: currentServerPacket.you.public.position.x - canvas.width/2,
+      y: currentServerPacket.you.public.position.y - canvas.height/2
     }
 
     // Draw stars
@@ -175,8 +175,8 @@ $(function(){
     g.stroke();
 
     // Draw the current user's player
-    g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.directionIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
-    g.drawImage(images.selectorSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.colorIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
+    g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.public.directionIdentifier*40, 40, 40, (currentServerPacket.you.public.position.x-scale/2)-center.x, (currentServerPacket.you.public.position.y-scale/2)-center.y, scale, scale);
+    g.drawImage(images.selectorSpritesheet, 0, currentServerPacket.you.public.colorIdentifier*40, 40, 40, (currentServerPacket.you.public.position.x-scale/2)-center.x, (currentServerPacket.you.public.position.y-scale/2)-center.y, scale, scale);
 
     // Draw the rest of the players
     let fontSize = Math.floor(scale/6);
@@ -200,16 +200,16 @@ $(function(){
     // Draw GUI
     g.fillStyle = "#fff";
     g.font = "56px PressStart2P";
-    g.fillText(currentServerPacket.you.publicPlayerInfo.username, 10, canvas.height - 60);
+    g.fillText(currentServerPacket.you.public.username, 10, canvas.height - 60);
 
     g.font = "32px PressStart2P";
-    g.fillText("Health: " + currentServerPacket.you.privatePlayerInfo.health + "/100", 10, canvas.height - 20);
+    g.fillText("Health: " + currentServerPacket.you.private.health + "/100", 10, canvas.height - 20);
 
     g.font = "12px PressStart2P";
     g.fillText("Session ID: " + currentServerPacket.sessionID, canvas.width - 270, canvas.height - 10);
 
 
-    if(Math.hypot(currentServerPacket.you.publicPlayerInfo.position.x, currentServerPacket.you.publicPlayerInfo.position.y) >= 50000){
+    if(Math.hypot(currentServerPacket.you.public.position.x, currentServerPacket.you.public.position.y) >= 50000){
       g.fillStyle = Math.floor(Date.now()/200)%2==0 ? "#f00" : "#fff";
 
       let warningTextLineOne = "!!!WARNING!!!";
