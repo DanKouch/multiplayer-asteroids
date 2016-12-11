@@ -167,6 +167,13 @@ $(function(){
     g.fillStyle = "purple";
     g.fillRect((0-scale/8)-center.x, (0-scale/8)-center.y, (scale/4), (scale/4));
 
+    // Border circle
+    g.lineWidth = 20;
+    g.strokeStyle = '#f00';
+    g.beginPath();
+    g.arc(0-center.x, 0-center.y, 50000, 0, 2 * Math.PI, false);
+    g.stroke();
+
     // Draw the current user's player
     g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.directionIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
     g.drawImage(images.selectorSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.colorIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
@@ -200,6 +207,21 @@ $(function(){
 
     g.font = "12px PressStart2P";
     g.fillText("Session ID: " + currentServerPacket.sessionID, canvas.width - 270, canvas.height - 10);
+
+
+    if(Math.hypot(currentServerPacket.you.publicPlayerInfo.position.x, currentServerPacket.you.publicPlayerInfo.position.y) >= 50000){
+      g.fillStyle = Math.floor(Date.now()/200)%2==0 ? "#f00" : "#fff";
+
+      let warningTextLineOne = "!!!WARNING!!!";
+      g.font = "72px PressStart2P";
+      g.fillText(warningTextLineOne, canvas.width/2 - g.measureText(warningTextLineOne).width/2, canvas.height/2 - 100);
+
+      g.fillStyle = "#f00";
+
+      let warningTextLineTwo = "TURN BACK NOW";
+      g.font = "42px PressStart2P";
+      g.fillText(warningTextLineTwo, canvas.width/2 - g.measureText(warningTextLineTwo).width/2, canvas.height/2 + 150);
+    }
 
     if(!socket.connected){
       g.fillStyle = "#f00";

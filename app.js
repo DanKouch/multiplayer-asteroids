@@ -109,11 +109,13 @@ session.prototype.addClient = function(socket, username){
       y: 0
     }
   }
-
+  socket.outOfBoundsTime = 0;
   socket.keysPressed = [];
   socket.mouseInfo = {
     pressed: false
   }
+
+
 
   // Actually add the user
   let index = this.clients.push(socket);
@@ -206,16 +208,16 @@ session.prototype.logic = function(){
       player.publicPlayerInfo.directionIdentifier = 0;
     }
 
-    if(player.keysPressed.indexOf("W") !== -1){
+    if(player.keysPressed.indexOf("W") !== -1 && player.privatePlayerInfo.velocity.y >= (-1*config.maxSpeed)+config.jetpackPower){
       player.privatePlayerInfo.velocity.y-=config.jetpackPower;
     }
-    if(player.keysPressed.indexOf("A") !== -1){
+    if(player.keysPressed.indexOf("A") !== -1 && player.privatePlayerInfo.velocity.x >= (-1*config.maxSpeed)+config.jetpackPower){
       player.privatePlayerInfo.velocity.x-=config.jetpackPower;
     }
-    if(player.keysPressed.indexOf("S") !== -1){
+    if(player.keysPressed.indexOf("S") !== -1 && player.privatePlayerInfo.velocity.y <= config.maxSpeed-config.jetpackPower){
       player.privatePlayerInfo.velocity.y+=config.jetpackPower;
     }
-    if(player.keysPressed.indexOf("D") !== -1){
+    if(player.keysPressed.indexOf("D") !== -1 && player.privatePlayerInfo.velocity.x <= config.maxSpeed-config.jetpackPower){
       player.privatePlayerInfo.velocity.x+=config.jetpackPower;
     }
 
@@ -238,6 +240,17 @@ session.prototype.logic = function(){
 
     player.publicPlayerInfo.position.x += player.privatePlayerInfo.velocity.x;
     player.publicPlayerInfo.position.y += player.privatePlayerInfo.velocity.y;
+
+    // Handle boundry logic
+    if(Math.hypot(player.publicPlayerInfo.position.x, player.publicPlayerInfo.position.y) >= config.unsafeDistance){
+      player.outOfBoundsTime++;
+      if(player.outOfBoundsTime >= config.unsafeDistanceDamageTime){
+          player.privatePlayerInfo.health -= (player.privatePlayerInfo.health >= 5) ? 5 : 0;
+          player.outOfBoundsTime = 0;
+      }
+    }else{
+      player.outOfBoundsTime = 0;
+    }
   });
 
   this.sendPackets();
