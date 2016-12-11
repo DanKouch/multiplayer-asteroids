@@ -6,6 +6,8 @@ images.playerSpritesheet = new Image();
 images.playerSpritesheet.src = "./images/PlayerSpritesheet.png"
 images.selectorSpritesheet = new Image();
 images.selectorSpritesheet.src = "./images/SelectorSpritesheet.png"
+images.starsSpritesheet = new Image();
+images.starsSpritesheet.src = "./images/StarsSpritesheet.png"
 
 $(function(){
   // Set up view
@@ -93,6 +95,15 @@ $(function(){
   	  }
   	});
 
+    window.addEventListener("blur", function(e){
+        for(var i = 0; i < keysPressed.length; i++){
+          socket.emit("key press event", {
+            key: keysPressed[i],
+            pressed: false
+          });
+        }
+  	});
+
   	document.addEventListener("mousedown", function(e){
       socket.emit("mouse press event", {
         pressed: true
@@ -105,13 +116,13 @@ $(function(){
       });
   	});
   }
+
   function render(){
     if(currentServerPacket === undefined){
       g.fillStyle = "#000";
       g.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
-
 
     g.mozImageSmoothingEnabled = false;
     g.webkitImageSmoothingEnabled = false;
@@ -128,15 +139,56 @@ $(function(){
       y: currentServerPacket.you.publicPlayerInfo.position.y - canvas.height/2
     }
 
-    currentServerPacket.players.concat(currentServerPacket.you.publicPlayerInfo).forEach((player) => {
-      g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, (player.position.x-scale/2)-center.x, (player.position.y-scale/2)-center.y, scale, scale);
-      g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, (player.position.x-scale/2)-center.x, (player.position.y-scale/2)-center.y, scale, scale);
+    // Draw stars
+    for(var x = (0-(center.x/4)%(scale*6))-scale*6; x < canvas.width; x += scale*6){
+      for(var y = (0-(center.y/4)%(scale*6))-scale*6; y < canvas.height; y+= scale*6){
+        g.drawImage(images.starsSpritesheet, 0, 0, 100, 100, x, y, scale*6, scale*6);
+      }
+    }
+
+    for(var x = (0-(center.x/6)%(scale*4))-scale*6; x < canvas.width; x += scale*4){
+      for(var y = (0-(center.y/6)%(scale*4))-scale*6; y < canvas.height; y+= scale*4){
+        g.drawImage(images.starsSpritesheet, 0, 100, 100, 100, x, y, scale*4, scale*4);
+      }
+    }
+
+    for(var x = (0-(center.x/8)%(scale*6))-scale*6; x < canvas.width; x += scale*2){
+      for(var y = (0-(center.y/8)%(scale*6))-scale*6; y < canvas.height; y+= scale*2){
+        g.drawImage(images.starsSpritesheet, 0, 200, 100, 100, x, y, scale*2, scale*2);
+      }
+    }
+
+    // Center reference
+    g.fillStyle = "purple";
+    g.fillRect((0-scale/8)-center.x, (0-scale/8)-center.y, (scale/4), (scale/4));
+
+    // Draw the current user's player
+    g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.directionIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
+    g.drawImage(images.selectorSpritesheet, 0, currentServerPacket.you.publicPlayerInfo.colorIdentifier*40, 40, 40, (currentServerPacket.you.publicPlayerInfo.position.x-scale/2)-center.x, (currentServerPacket.you.publicPlayerInfo.position.y-scale/2)-center.y, scale, scale);
+
+    // Draw the rest of the players
+    let fontSize = Math.floor(scale/6);
+    g.font = fontSize + "px PressStart2P";
+
+    currentServerPacket.players.forEach((player) => {
+      let x = (player.position.x-scale/2)-center.x;
+      let y = (player.position.y-scale/2)-center.y;
+      g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, x, y, scale, scale);
+      g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, x, y, scale, scale);
+
+      g.fillStyle = "#555";
+      g.globalAlpha = 0.5;
+      g.fillRect(x, y - fontSize*2 + 3, g.measureText(player.username).width + 7, fontSize + 4);
+
+      g.fillStyle = "#fff";
+      g.fillText(player.username, x + 5, y - scale/10);
+      g.globalAlpha = 1;
     });
 
     // Draw GUI
     g.fillStyle = "#fff";
     g.font = "56px PressStart2P";
-    g.fillText(truncate(currentServerPacket.you.publicPlayerInfo.username, 10), 10, canvas.height - 60);
+    g.fillText(currentServerPacket.you.publicPlayerInfo.username, 10, canvas.height - 60);
 
     g.font = "32px PressStart2P";
     g.fillText("Health: " + currentServerPacket.you.privatePlayerInfo.health + "/100", 10, canvas.height - 20);
@@ -151,11 +203,3 @@ $(function(){
     }
   }
 });
-
-function truncate(str, length){
-  if(str.length <= length){
-    return str;
-    alert();
-  }
-  return str.substring(0, length).concat("...");
-}

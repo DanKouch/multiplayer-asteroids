@@ -8,7 +8,7 @@
     "start": "node app.js"
   },
   "author": "Daniel Kouchekinia",
-  "license": "ISC",
+  "license": "MIT",
   "engines": {
     "node": "^6.9.1",
     "npm": "^3.10.8"

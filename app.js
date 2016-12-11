@@ -39,7 +39,7 @@ io.on('connection', function(socket){
     };
 
     // Check usernmame
-    let safeUsername = profanityCensor.filter(escape(loginObject.username));
+    let safeUsername = profanityCensor.filter(escape(loginObject.username)).substring(0, 8);
     if(!usernameOk(safeUsername)){
       loginResponse.successful = false;
       loginResponse.usernameError = "Please select another username."
