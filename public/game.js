@@ -10,6 +10,10 @@ images.starsSpritesheet = new Image();
 images.starsSpritesheet.src = "./images/StarsSpritesheet.png"
 
 $(function(){
+
+  // Retreive username from cookie
+  $("#usernameInput").val(document.cookie.split("=")[1]);
+
   // Set up view
   var canvas = document.getElementById("gameCanvas");
   var g = canvas.getContext("2d");
@@ -36,6 +40,7 @@ $(function(){
 
     socket.on('login response', function(response){
       if(response.successful){
+        document.cookie = "username=" + $("#usernameInput").val();
         $("#loginDiv").fadeOut(300);
         $("#gameCanvas").fadeIn(300);
         manageConnection();
