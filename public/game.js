@@ -9,6 +9,26 @@ images.selectorSpritesheet.src = "./images/SelectorSpritesheet.png"
 images.starsSpritesheet = new Image();
 images.starsSpritesheet.src = "./images/StarsSpritesheet.png"
 
+// Config
+var config = {
+  renderTick: 10,
+  maxSafeDistance: 50000,
+  minimapSize: 2,
+  minimapPadding: 25,
+  minimapAlpha: 0.75,
+  colors: {
+    background: "#000",
+    centerBlock: "#505",
+    text: "#fff",
+    nameTextBackground: "#555",
+    warning: "#f00",
+    minimapBackground: "#666",
+    minimapLines: "#303030"
+  }
+};
+
+var colors = ["red", "orange", "yellow", "green", "blue", "purple"];
+
 $(function(){
 
   // Retreive username from cookie
@@ -73,7 +93,7 @@ $(function(){
     });
 
     // Render loop
-    var renderLoop = setInterval(render, 10);
+    var renderLoop = setInterval(render, config.renderTick);
 
     // Handle user input and send to server
     var keysPressed = [];
@@ -124,7 +144,7 @@ $(function(){
 
   function render(){
     if(currentServerPacket === undefined){
-      g.fillStyle = "#000";
+      g.fillStyle = config.colors.background;
       g.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
@@ -136,7 +156,7 @@ $(function(){
 
     var scale = canvas.height/15;
 
-    g.fillStyle = "#000";
+    g.fillStyle = config.colors.background;
     g.fillRect(0, 0, canvas.width, canvas.height);
 
     var center = {
@@ -164,14 +184,14 @@ $(function(){
     }
 
     // Center reference
-    g.fillStyle = "purple";
+    g.fillStyle = config.colors.centerBlock;
     g.fillRect((0-scale/8)-center.x, (0-scale/8)-center.y, (scale/4), (scale/4));
 
     // Border circle
     g.lineWidth = 20;
-    g.strokeStyle = '#f00';
+    g.strokeStyle = config.colors.warning;
     g.beginPath();
-    g.arc(0-center.x, 0-center.y, 50000, 0, 2 * Math.PI, false);
+    g.arc(0-center.x, 0-center.y, config.maxSafeDistance, 0, 2 * Math.PI, false);
     g.stroke();
 
     // Draw the current user's player
@@ -188,17 +208,17 @@ $(function(){
       g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, x, y, scale, scale);
       g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, x, y, scale, scale);
 
-      g.fillStyle = "#555";
+      g.fillStyle = config.colors.nameTextBackground;
       g.globalAlpha = 0.5;
       g.fillRect(x, y - fontSize*2 + 3, g.measureText(player.username).width + 7, fontSize + 4);
 
-      g.fillStyle = "#fff";
+      g.fillStyle = config.colors.text;
       g.fillText(player.username, x + 5, y - scale/10);
       g.globalAlpha = 1;
     });
 
-    // Draw GUI
-    g.fillStyle = "#fff";
+    // GUI Text
+    g.fillStyle = config.colors.text;
     g.font = "56px PressStart2P";
     g.fillText(currentServerPacket.you.public.username, 10, canvas.height - 60);
 
@@ -208,15 +228,66 @@ $(function(){
     g.font = "12px PressStart2P";
     g.fillText("Session ID: " + currentServerPacket.sessionID, canvas.width - 270, canvas.height - 10);
 
+    // Minimap
+    g.save();
+    g.fillStyle = config.colors.minimapBackground;
+    g.globalAlpha = config.minimapAlpha;
 
+    let minimap = {
+      x: canvas.width - (config.minimapSize*scale) - config.minimapPadding,
+      y: (config.minimapSize*scale) + config.minimapPadding,
+      scale: config.maxSafeDistance / (config.minimapSize*scale)
+    }
+    g.beginPath();
+    g.arc(minimap.x, minimap.y, (config.minimapSize*scale), 0, 2 * Math.PI, false);
+    g.fill();
+    g.clip();
+    g.closePath();
+
+    g.strokeStyle = config.colors.minimapLines;
+    g.lineWidth = 1;
+
+    // Draw minimap lines
+    g.beginPath();
+    g.moveTo(minimap.x, minimap.y + (config.minimapSize*scale));
+    g.lineTo(minimap.x, minimap.y - (config.minimapSize*scale));
+    g.stroke();
+    g.beginPath();
+    g.moveTo(minimap.x + (config.minimapSize*scale), minimap.y);
+    g.lineTo(minimap.x - (config.minimapSize*scale), minimap.y);
+    g.stroke();
+    g.beginPath();
+    g.arc(minimap.x, minimap.y, (config.minimapSize*scale)*(1/3), 0, 2 * Math.PI, false);
+    g.stroke();
+    g.beginPath();
+    g.arc(minimap.x, minimap.y, (config.minimapSize*scale)*(2/3), 0, 2 * Math.PI, false);
+    g.stroke();
+    g.beginPath();
+    g.arc(minimap.x, minimap.y, (config.minimapSize*scale), 0, 2 * Math.PI, false);
+    g.stroke();
+
+    // Draw player dots on minimap
+    if(Math.floor(Date.now()/400)%2==0){
+      currentServerPacket.players.concat(currentServerPacket.you.public).forEach((player) => {
+        g.fillStyle = colors[player.colorIdentifier];
+        g.beginPath();
+        g.arc(minimap.x+(player.position.x/minimap.scale), minimap.y + (player.position.y/minimap.scale), scale/20, 0, 2 * Math.PI, false);
+        g.fill();
+        g.closePath();
+      });
+    }
+
+    g.restore();
+
+    // Distance Warning
     if(Math.hypot(currentServerPacket.you.public.position.x, currentServerPacket.you.public.position.y) >= 50000){
-      g.fillStyle = Math.floor(Date.now()/200)%2==0 ? "#f00" : "#fff";
+      g.fillStyle = Math.floor(Date.now()/200)%2==0 ? config.colors.warning : config.colors.text;
 
       let warningTextLineOne = "!!!WARNING!!!";
       g.font = "72px PressStart2P";
       g.fillText(warningTextLineOne, canvas.width/2 - g.measureText(warningTextLineOne).width/2, canvas.height/2 - 100);
 
-      g.fillStyle = "#f00";
+      g.fillStyle = config.colors.warning;
 
       let warningTextLineTwo = "TURN BACK NOW";
       g.font = "42px PressStart2P";
@@ -224,7 +295,7 @@ $(function(){
     }
 
     if(!socket.connected){
-      g.fillStyle = "#f00";
+      g.fillStyle = config.colors.warning;
       g.font = "16px PressStart2P";
       g.fillText("Lost connection with server", canvas.width - 450, 30);
     }

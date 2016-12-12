@@ -22,7 +22,7 @@ Session.prototype.addPlayer = function(player){
     _this.players.splice(_this.players.indexOf(player), 1);
     Session.winston.info("User " + player.public.username + " (" + player.public.id + ") on session " + _this.id + " has disconnected");
     if(_this.players.length < 1){
-      _this.splice(_this.indexOf(player), 1);
+      _this.players.splice(_this.players.indexOf(player), 1);
       Session.winston.info("Session with id " + _this.id + " has been deleted");
     }
   });
