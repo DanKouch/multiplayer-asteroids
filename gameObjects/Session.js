@@ -7,6 +7,9 @@ const shortId = require('shortid');
 let Session = function(){
   this.id = shortId.generate();
   this.players = [];
+  this.projectiles = {
+    lasers: []
+  };
   this.tick = setInterval(this.logic.bind(this), 10);
 }
 
@@ -33,6 +36,7 @@ Session.prototype.sendPackets = function(){
   this.players.forEach((playerToSendTo) => {
     playerToSendTo.socket.emit("server packet", {
       players: this.players.filter((x) => (x.public.id !== playerToSendTo.public.id)).map((x) => x.public),
+      projectiles: this.projectiles,
       sessionID: this.id,
       you: {
         public: playerToSendTo.public,
@@ -60,6 +64,10 @@ Session.prototype.getColorIdentifier = function(){
 Session.prototype.logic = function(){
   this.players.forEach((player) => {
     player.logic();
+  });
+
+  this.projectiles.lasers.forEach((projectile) => {
+    projectile.logic(this);
   });
 
   this.sendPackets();

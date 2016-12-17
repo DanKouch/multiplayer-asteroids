@@ -3,26 +3,23 @@
 // Imports
 const config = require("../config.js");
 const shortId = require('shortid');
+const laserObjects = require("./weapons/laserObjects.js");
+const Vector = require("../utility/Vector.js");
 
-let Player = function(socket, username){
+let Player = function(socket, session, username){
   this.socket = socket;
+  this.session = session;
 
   this.public = {
     username: username,
     directionIdentifier: 0,
     id: shortId.generate(),
-    position: {
-      x: 0,
-      y: 0
-    }
+    position: new Vector(0, 0)
   };
 
   this.private = {
     health: 100,
-    velocity: {
-      x: 0,
-      y: 0
-    }
+    velocity: new Vector(0, 0)
   };
 
   this.outOfBoundsTime = 0;
@@ -31,6 +28,11 @@ let Player = function(socket, username){
   this.mouseInfo = {
     pressed: false
   };
+
+  // Set up weapons
+  this.weapons = {
+    laserGun: new laserObjects.LaserGun(this, config.laserStartingAmmo)
+  }
 
   let _this = this;
 
@@ -50,6 +52,14 @@ let Player = function(socket, username){
 
   this.socket.on('mouse press event', function(e){
     _this.mouseInfo.pressed = e.pressed;
+
+    /* Weapon Types:
+    ** LASER: 0
+    */
+
+    if(e.weaponType === 0){
+      _this.weapons.laserGun.fire(new Vector(e.relativeX, e.relativeY));
+    }
   });
 
 }
@@ -114,11 +124,18 @@ Player.prototype.logic = function(){
   if(Math.hypot(this.public.position.x, this.public.position.y) >= config.unsafeDistance){
     this.outOfBoundsTime++;
     if(this.outOfBoundsTime >= config.unsafeDistanceDamageTime){
-        this.private.health -= (this.private.health >= 5) ? 5 : 0;
+        this.removeHealth(5);
         this.outOfBoundsTime = 0;
     }
   }else{
     this.outOfBoundsTime = 0;
+  }
+}
+
+Player.prototype.removeHealth = function(ammount){
+  this.private.health -= this.private.health >= ammount ? ammount : this.private.health;
+  if(this.private.health == 0){
+    // TODO: Add death
   }
 }
 

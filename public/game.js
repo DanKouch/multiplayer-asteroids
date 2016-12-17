@@ -23,7 +23,8 @@ var config = {
     nameTextBackground: "#555",
     warning: "#f00",
     minimapBackground: "#666",
-    minimapLines: "#303030"
+    minimapLines: "#303030",
+    laserColor: "#f00"
   }
 };
 
@@ -131,7 +132,10 @@ $(function(){
 
   	document.addEventListener("mousedown", function(e){
       socket.emit("mouse press event", {
-        pressed: true
+        pressed: true,
+        relativeX: e.clientX - canvas.width/2,
+        relativeY: e.clientY - canvas.height/2,
+        weaponType: 0
       });
   	});
 
@@ -193,6 +197,19 @@ $(function(){
     g.beginPath();
     g.arc(0-center.x, 0-center.y, config.maxSafeDistance, 0, 2 * Math.PI, false);
     g.stroke();
+
+    // Draw Lasers
+    g.strokeStyle = config.colors.laserColor;
+    g.lineWidth = scale/10;
+    currentServerPacket.projectiles.lasers.forEach((laser) => {
+      g.arc(laser.position.x-center.x, laser.position.y-center.y, scale/10, 0, 2 * Math.PI, false);
+      g.globalAlpha = laser.health < 50 ? laser.health/50 : 1;
+      g.beginPath();
+      g.moveTo(laser.position.x-center.x, laser.position.y-center.y);
+      g.lineTo(laser.position.x-center.x+(laser.velocity.x*scale/20), laser.position.y-center.y+(laser.velocity.y*scale/20));
+      g.stroke();
+      g.globalAlpha = 1;
+    });
 
     // Draw the current user's player
     g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.public.directionIdentifier*40, 40, 40, (currentServerPacket.you.public.position.x-scale/2)-center.x, (currentServerPacket.you.public.position.y-scale/2)-center.y, scale, scale);

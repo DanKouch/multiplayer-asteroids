@@ -63,7 +63,7 @@ io.on('connection', function(socket){
     }
 
     if(loginResponse.successful){
-      sessionToJoin.addPlayer(new Player(socket, safeUsername));
+      sessionToJoin.addPlayer(new Player(socket, sessionToJoin, safeUsername));
     }
 
     socket.emit("login response", loginResponse);
