@@ -8,6 +8,12 @@ images.selectorSpritesheet = new Image();
 images.selectorSpritesheet.src = "./images/SelectorSpritesheet.png"
 images.starsSpritesheet = new Image();
 images.starsSpritesheet.src = "./images/StarsSpritesheet.png"
+images.mineSpritesheet = new Image();
+images.mineSpritesheet.src = "./images/MineSpritesheet.png"
+images.torpedoSpritesheet = new Image();
+images.torpedoSpritesheet.src = "./images/TorpedoSpritesheet.png"
+images.weaponSelectorSpritesheet = new Image();
+images.weaponSelectorSpritesheet.src = "./images/WeaponSelectorSpritesheet.png"
 
 // Config
 var config = {
@@ -29,6 +35,7 @@ var config = {
 };
 
 var colors = ["red", "orange", "yellow", "green", "blue", "purple"];
+var weaponSelected = 0;
 
 $(function(){
 
@@ -100,14 +107,19 @@ $(function(){
     var keysPressed = [];
 
   	document.addEventListener("keydown", function(e){
-  	   if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) === -1){
+      if(String.fromCharCode(e.keyCode) == "1"){
+        weaponSelected = 0;
+      }else if(String.fromCharCode(e.keyCode) == "2"){
+        weaponSelected = 1;
+      }else if(String.fromCharCode(e.keyCode) == "3"){
+        weaponSelected = 2;
+      }
+      if(keysPressed.indexOf(String.fromCharCode(e.keyCode)) === -1){
   	  	keysPressed.push(String.fromCharCode(e.keyCode));
-
   	    socket.emit("key press event", {
           key: String.fromCharCode(e.keyCode),
           pressed: true
         })
-
   	  }
   	})
 
@@ -135,7 +147,7 @@ $(function(){
         pressed: true,
         relativeX: e.clientX - canvas.width/2,
         relativeY: e.clientY - canvas.height/2,
-        weaponType: 0
+        weaponType: weaponSelected
       });
   	});
 
@@ -202,13 +214,42 @@ $(function(){
     g.strokeStyle = config.colors.laserColor;
     g.lineWidth = scale/10;
     currentServerPacket.projectiles.lasers.forEach((laser) => {
-      g.arc(laser.position.x-center.x, laser.position.y-center.y, scale/10, 0, 2 * Math.PI, false);
       g.globalAlpha = laser.health < 50 ? laser.health/50 : 1;
       g.beginPath();
       g.moveTo(laser.position.x-center.x, laser.position.y-center.y);
-      g.lineTo(laser.position.x-center.x+(laser.velocity.x*scale/20), laser.position.y-center.y+(laser.velocity.y*scale/20));
+      var endX = laser.position.x-center.x + (laser.velocity.x * (1 / Math.hypot(laser.velocity.x, laser.velocity.y)))*scale;
+      var endY = laser.position.y-center.y + (laser.velocity.y * (1 / Math.hypot(laser.velocity.x, laser.velocity.y)))*scale;
+      g.lineTo(endX, endY);
       g.stroke();
       g.globalAlpha = 1;
+    });
+
+    // Draw Mines
+    currentServerPacket.projectiles.mines.forEach((mine) => {
+      if(mine.timeLeft >= 20){
+        g.drawImage(images.mineSpritesheet, 0, 7 * Math.floor(mine.timeLeft/75), 7, 7, mine.position.x-center.x-scale/7, mine.position.y-center.y-scale/7, scale/3.5, scale/3.5);
+      }else{
+        g.fillStyle= "white";
+        g.beginPath();
+        g.arc(mine.position.x-center.x, mine.position.y-center.y, scale*2.7/(mine.timeLeft+1), 0, 2 * Math.PI, false);
+        g.fill();
+      }
+    });
+
+    // Draw Torpedos
+    currentServerPacket.projectiles.torpedos.forEach((torpedo) => {
+      if(torpedo.timeLeft >= 20){
+        g.save();
+        g.translate(torpedo.position.x-center.x, torpedo.position.y-center.y);
+        g.rotate(Math.atan2(-1*torpedo.heading.y, -1*torpedo.heading.x) + Math.PI*1.5);
+        g.drawImage(images.torpedoSpritesheet, 0, 30 * (Math.floor(torpedo.timeLeft/4)%3), 13, 30, (((scale/40)*8.6)/2)*-1, (((scale/40)*20)/2)*-1, (scale/40)*8.6, (scale/40)*20);
+        g.restore();
+      }else{
+        g.fillStyle= "white";
+        g.beginPath();
+        g.arc(torpedo.position.x-center.x, torpedo.position.y-center.y, scale*2.7/(torpedo.timeLeft+1), 0, 2 * Math.PI, false);
+        g.fill();
+      }
     });
 
     // Draw the current user's player
@@ -295,6 +336,16 @@ $(function(){
     }
 
     g.restore();
+
+    // Weapon Selector
+    var startingY = minimap.y + (config.minimapSize*scale) + scale/2;
+    var boxSizeDivider = 34;
+    g.drawImage(images.weaponSelectorSpritesheet, (weaponSelected == 0 ? 34 : 0), 0, 34, 50, canvas.width - ((scale/boxSizeDivider)*50*(weaponSelected == 0 ? 1.1 : 1) + 10), startingY, (scale/boxSizeDivider)*34*(weaponSelected == 0 ? 1.1 : 1), (scale/boxSizeDivider)*50*(weaponSelected == 0 ? 1.1 : 1));
+    startingY += (scale/boxSizeDivider)*50*(weaponSelected == 0 ? 1.1 : 1) + 10;
+    g.drawImage(images.weaponSelectorSpritesheet, (weaponSelected == 1 ? 34 : 0), 50, 34, 50, canvas.width - ((scale/boxSizeDivider)*50*(weaponSelected == 1 ? 1.1 : 1) + 10), startingY, (scale/boxSizeDivider)*34*(weaponSelected == 1 ? 1.1 : 1), (scale/boxSizeDivider)*50*(weaponSelected == 1 ? 1.1 : 1));
+    startingY += (scale/boxSizeDivider)*50*(weaponSelected == 1 ? 1.1 : 1) + 10;
+    g.drawImage(images.weaponSelectorSpritesheet, (weaponSelected == 2 ? 34 : 0), 100, 34, 50, canvas.width - ((scale/boxSizeDivider)*50*(weaponSelected == 2 ? 1.1 : 1) + 10), startingY, (scale/boxSizeDivider)*34*(weaponSelected == 2 ? 1.1 : 1), (scale/boxSizeDivider)*50*(weaponSelected == 2 ? 1.1 : 1));
+
 
     // Distance Warning
     if(Math.hypot(currentServerPacket.you.public.position.x, currentServerPacket.you.public.position.y) >= 50000){

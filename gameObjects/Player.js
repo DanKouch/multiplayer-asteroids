@@ -4,6 +4,8 @@
 const config = require("../config.js");
 const shortId = require('shortid');
 const laserObjects = require("./weapons/laserObjects.js");
+const mineObjects = require("./weapons/mineObjects.js");
+const torpedoObjects = require("./weapons/torpedoObjects.js");
 const Vector = require("../utility/Vector.js");
 
 let Player = function(socket, session, username){
@@ -31,7 +33,9 @@ let Player = function(socket, session, username){
 
   // Set up weapons
   this.weapons = {
-    laserGun: new laserObjects.LaserGun(this, config.laserStartingAmmo)
+    laserGun: new laserObjects.LaserGun(this, config.laserStartingAmmo),
+    mineGun: new mineObjects.MineGun(this, config.mineStartingAmmo),
+    torpedoGun: new torpedoObjects.TorpedoGun(this, config.torpedoStartingAmmo)
   }
 
   let _this = this;
@@ -55,10 +59,16 @@ let Player = function(socket, session, username){
 
     /* Weapon Types:
     ** LASER: 0
+    ** MINE: 1
+    ** TORPEDO: 2
     */
 
     if(e.weaponType === 0){
       _this.weapons.laserGun.fire(new Vector(e.relativeX, e.relativeY));
+    }else if(e.weaponType === 1){
+      _this.weapons.mineGun.fire();
+    }else if(e.weaponType === 2){
+      _this.weapons.torpedoGun.fire(new Vector(e.relativeX, e.relativeY));
     }
   });
 

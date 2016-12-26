@@ -8,7 +8,9 @@ let Session = function(){
   this.id = shortId.generate();
   this.players = [];
   this.projectiles = {
-    lasers: []
+    lasers: [],
+    mines: [],
+    torpedos: []
   };
   this.tick = setInterval(this.logic.bind(this), 10);
 }
@@ -67,6 +69,14 @@ Session.prototype.logic = function(){
   });
 
   this.projectiles.lasers.forEach((projectile) => {
+    projectile.logic(this);
+  });
+
+  this.projectiles.mines.forEach((projectile) => {
+    projectile.logic(this);
+  });
+
+  this.projectiles.torpedos.forEach((projectile) => {
     projectile.logic(this);
   });
 

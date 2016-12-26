@@ -13,7 +13,7 @@ laserObjects.LaserGun = function(player, ammo){
 }
 
 laserObjects.LaserGun.prototype.fire = function(directionVector){
-  this.player.session.projectiles.lasers.push(new laserObjects.Laser(this.player.public.position.clone(), directionVector.clone().normalize().scale(config.laserSpeed)));//this.player.private.velocity.clone().add(directionVector.clone().normalize()).normalize().scale(config.laserSpeed)));
+  this.player.session.projectiles.lasers.push(new laserObjects.Laser(this.player.public.position.clone(), this.player.private.velocity.clone().add(directionVector.clone().normalize().scale(config.laserSpeed))));
 }
 
 laserObjects.Laser = function(pos, vel){
