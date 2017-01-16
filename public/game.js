@@ -247,27 +247,39 @@ $(function(){
     });
 
     // Draw the current user's player
+    if(currentServerPacket.you.public.dead){
+      g.globalAlpha = 0.3;
+    }
     g.drawImage(images.playerSpritesheet, 0, currentServerPacket.you.public.directionIdentifier*40, 40, 40, (currentServerPacket.you.public.position.x-scale/2)-center.x, (currentServerPacket.you.public.position.y-scale/2)-center.y, scale, scale);
     g.drawImage(images.selectorSpritesheet, 0, currentServerPacket.you.public.colorIdentifier*40, 40, 40, (currentServerPacket.you.public.position.x-scale/2)-center.x, (currentServerPacket.you.public.position.y-scale/2)-center.y, scale, scale);
+    g.globalAlpha = 1;
 
     // Draw the rest of the players
     let fontSize = Math.floor(scale/6);
     g.font = fontSize + "px PressStart2P";
 
+
     currentServerPacket.players.forEach((player) => {
-      let x = (player.position.x-scale/2)-center.x;
-      let y = (player.position.y-scale/2)-center.y;
-      g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, x, y, scale, scale);
-      g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, x, y, scale, scale);
+      if(!player.dead || currentServerPacket.you.public.dead){
+        if(player.dead){
+          g.globalAlpha = 0.3;
+        }
+        let x = (player.position.x-scale/2)-center.x;
+        let y = (player.position.y-scale/2)-center.y;
+        g.drawImage(images.playerSpritesheet, 0, player.directionIdentifier*40, 40, 40, x, y, scale, scale);
+        g.drawImage(images.selectorSpritesheet, 0, player.colorIdentifier*40, 40, 40, x, y, scale, scale);
+        g.globalAlpha = 1;
 
-      g.fillStyle = config.colors.nameTextBackground;
-      g.globalAlpha = 0.5;
-      g.fillRect(x, y - fontSize*2 + 3, g.measureText(player.username).width + 7, fontSize + 4);
+        g.fillStyle = config.colors.nameTextBackground;
+        g.globalAlpha = 0.5;
+        g.fillRect(x, y - fontSize*2 + 3, g.measureText(player.username).width + 7, fontSize + 4);
 
-      g.fillStyle = config.colors.text;
-      g.fillText(player.username, x + 5, y - scale/10);
-      g.globalAlpha = 1;
+        g.fillStyle = config.colors.text;
+        g.fillText(player.username, x + 5, y - scale/10);
+        g.globalAlpha = 1;
+      }
     });
+
 
     // GUI Text
     g.fillStyle = config.colors.text;

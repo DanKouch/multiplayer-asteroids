@@ -3,13 +3,15 @@ var config = {};
 // Server management config
 config.maxPlayersPerSession = 6;
 
-// Game mechanics config
+// Border
+config.unsafeDistance = 50000;
+config.unsafeDistanceDamageTime = 100;
+
+// Player
 config.jetpackPower = 0.2;
 config.maxSpeed = 10;
 config.ambientFriction = 0.05;
-
-config.unsafeDistance = 50000;
-config.unsafeDistanceDamageTime = 100;
+config.playerExplosionDamage = 10;
 
 // Laser
 config.laserSpeed = 15;

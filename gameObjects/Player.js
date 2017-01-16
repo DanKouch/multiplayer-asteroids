@@ -6,6 +6,7 @@ const shortId = require('shortid');
 const laserObjects = require("./weapons/laserObjects.js");
 const mineObjects = require("./weapons/mineObjects.js");
 const torpedoObjects = require("./weapons/torpedoObjects.js");
+const Explosion = require("./weapons/Explosion.js");
 const Vector = require("../utility/Vector.js");
 
 let Player = function(socket, session, username){
@@ -16,7 +17,8 @@ let Player = function(socket, session, username){
     username: username,
     directionIdentifier: 0,
     id: shortId.generate(),
-    position: new Vector(0, 0)
+    position: new Vector(0, 0),
+    dead: false
   };
 
   this.private = {
@@ -62,19 +64,24 @@ let Player = function(socket, session, username){
     ** MINE: 1
     ** TORPEDO: 2
     */
-
-    if(e.weaponType === 0){
-      _this.weapons.laserGun.fire(new Vector(e.relativeX, e.relativeY));
-    }else if(e.weaponType === 1){
-      _this.weapons.mineGun.fire();
-    }else if(e.weaponType === 2){
-      _this.weapons.torpedoGun.fire(new Vector(e.relativeX, e.relativeY));
+    if(!_this.public.dead){
+      if(e.weaponType === 0){
+        _this.weapons.laserGun.fire(new Vector(e.relativeX, e.relativeY));
+      }else if(e.weaponType === 1){
+        _this.weapons.mineGun.fire();
+      }else if(e.weaponType === 2){
+        _this.weapons.torpedoGun.fire(new Vector(e.relativeX, e.relativeY));
+      }
     }
   });
 
 }
 
 Player.prototype.logic = function(){
+  if(this.private.health <= 0 && !this.public.dead){
+    this.die();
+  }
+
   /* Direction Identifiers:
   ** IDLE: 0
   ** UP: 4
@@ -140,6 +147,7 @@ Player.prototype.logic = function(){
   }else{
     this.outOfBoundsTime = 0;
   }
+
 }
 
 Player.prototype.removeHealth = function(ammount){
@@ -147,6 +155,11 @@ Player.prototype.removeHealth = function(ammount){
   if(this.private.health == 0){
     // TODO: Add death
   }
+}
+
+Player.prototype.die = function(){
+  this.public.dead = true;
+  this.session.gameObjects.push(new Explosion(config.playerExplosionDamage, this.public.position, this.private.velocity));
 }
 
 module.exports = Player;

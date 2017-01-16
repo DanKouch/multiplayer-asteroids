@@ -33,7 +33,7 @@ laserObjects.Laser.prototype.logic = function(session){
 
   // Collision Detection
   session.players.forEach((player) => {
-    if(Math.hypot((this.position.x - player.public.position.x), (this.position.y - player.public.position.y)) < 15){
+    if(!player.public.dead && Math.hypot((this.position.x - player.public.position.x), (this.position.y - player.public.position.y)) < 15){
       player.removeHealth(config.laserDamage);
       session.gameObjects.splice(session.gameObjects.indexOf(this), 1);
     }
