@@ -71,7 +71,7 @@ io.on('connection', function(socket){
 })
 
 function usernameOk(username){
-  return (username.trim() !== "" && username !== "null");
+  return (username.trim().indexOf(" ") === -1 && username.trim() !== "" && username !== "null");
 }
 
 function getSessionToJoin(socket){

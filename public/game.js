@@ -30,7 +30,10 @@ var config = {
     warning: "#f00",
     minimapBackground: "#666",
     minimapLines: "#303030",
-    laserColor: "#f00"
+    laserColor: "#f00",
+    playerListDeadText: "#888",
+    normalPlayerListColor: "#222",
+    currentPlayerListColor: "#3aa"
   }
 };
 
@@ -333,11 +336,13 @@ $(function(){
     // Draw player dots on minimap
     if(Math.floor(Date.now()/400)%2==0){
       currentServerPacket.players.concat(currentServerPacket.you.public).forEach((player) => {
-        g.fillStyle = colors[player.colorIdentifier];
-        g.beginPath();
-        g.arc(minimap.x+(player.position.x/minimap.scale), minimap.y + (player.position.y/minimap.scale), scale/20, 0, 2 * Math.PI, false);
-        g.fill();
-        g.closePath();
+        if(!player.dead){
+          g.fillStyle = colors[player.colorIdentifier];
+          g.beginPath();
+          g.arc(minimap.x+(player.position.x/minimap.scale), minimap.y + (player.position.y/minimap.scale), scale/20, 0, 2 * Math.PI, false);
+          g.fill();
+          g.closePath();
+        }
       });
     }
 
@@ -352,6 +357,23 @@ $(function(){
     startingY += (scale/boxSizeDivider)*50*(weaponSelected == 1 ? 1.1 : 1) + 10;
     g.drawImage(images.weaponSelectorSpritesheet, (weaponSelected == 2 ? 34 : 0), 100, 34, 50, canvas.width - ((scale/boxSizeDivider)*50*(weaponSelected == 2 ? 1.1 : 1) + 10), startingY, (scale/boxSizeDivider)*34*(weaponSelected == 2 ? 1.1 : 1), (scale/boxSizeDivider)*50*(weaponSelected == 2 ? 1.1 : 1));
 
+    // Player List
+    var currentY = (canvas.height/2)-100;
+    g.font = "18px PressStart2P";
+    g.fillStyle = config.colors.text;
+    g.fillText("Players:", 15, currentY - 10);
+    currentServerPacket.players.concat(currentServerPacket.you.public).forEach((player) => {
+      g.fillStyle = (player.id === currentServerPacket.you.public.id) ? config.colors.currentPlayerListColor : config.colors.normalPlayerListColor;
+      g.globalAlpha = 0.8;
+      g.fillRect(10, currentY, 250, 24);
+      if(!player.dead || player.id === currentServerPacket.you.public.id){
+        g.globalAlpha = 1;
+      }
+      g.fillStyle = (!player.dead || player.id === currentServerPacket.you.public.id) ? config.colors.text : config.colors.playerListDeadText;
+      g.fillText(player.username + ((player.dead) ? " XXX" : ""), 20, currentY + 22);
+      g.globalAlpha = 1;
+      currentY += 24;
+    });
 
     // Distance Warning
     if(Math.hypot(currentServerPacket.you.public.position.x, currentServerPacket.you.public.position.y) >= 50000){
