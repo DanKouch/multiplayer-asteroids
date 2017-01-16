@@ -210,44 +210,38 @@ $(function(){
     g.arc(0-center.x, 0-center.y, config.maxSafeDistance, 0, 2 * Math.PI, false);
     g.stroke();
 
-    // Draw Lasers
-    g.strokeStyle = config.colors.laserColor;
-    g.lineWidth = scale/10;
-    currentServerPacket.projectiles.lasers.forEach((laser) => {
-      g.globalAlpha = laser.health < 50 ? laser.health/50 : 1;
-      g.beginPath();
-      g.moveTo(laser.position.x-center.x, laser.position.y-center.y);
-      var endX = laser.position.x-center.x + (laser.velocity.x * (1 / Math.hypot(laser.velocity.x, laser.velocity.y)))*scale;
-      var endY = laser.position.y-center.y + (laser.velocity.y * (1 / Math.hypot(laser.velocity.x, laser.velocity.y)))*scale;
-      g.lineTo(endX, endY);
-      g.stroke();
-      g.globalAlpha = 1;
-    });
-
-    // Draw Mines
-    currentServerPacket.projectiles.mines.forEach((mine) => {
-      if(mine.timeLeft >= 20){
-        g.drawImage(images.mineSpritesheet, 0, 7 * Math.floor(mine.timeLeft/75), 7, 7, mine.position.x-center.x-scale/7, mine.position.y-center.y-scale/7, scale/3.5, scale/3.5);
-      }else{
-        g.fillStyle= "white";
+    // Draw Game Objects
+    currentServerPacket.gameObjects.forEach((gameObject) => {
+      // Draw Lasers
+      if(gameObject.type === "laser"){
+        g.strokeStyle = config.colors.laserColor;
+        g.lineWidth = scale/10;
+        g.globalAlpha = gameObject.health < 50 ? gameObject.health/50 : 1;
         g.beginPath();
-        g.arc(mine.position.x-center.x, mine.position.y-center.y, scale*2.7/(mine.timeLeft+1), 0, 2 * Math.PI, false);
-        g.fill();
-      }
-    });
+        g.moveTo(gameObject.position.x-center.x, gameObject.position.y-center.y);
+        var endX = gameObject.position.x-center.x + (gameObject.velocity.x * (1 / Math.hypot(gameObject.velocity.x, gameObject.velocity.y)))*scale;
+        var endY = gameObject.position.y-center.y + (gameObject.velocity.y * (1 / Math.hypot(gameObject.velocity.x, gameObject.velocity.y)))*scale;
+        g.lineTo(endX, endY);
+        g.stroke();
+        g.globalAlpha = 1;
 
-    // Draw Torpedos
-    currentServerPacket.projectiles.torpedos.forEach((torpedo) => {
-      if(torpedo.timeLeft >= 20){
+      // Draw Mines
+      } else if(gameObject.type === "mine"){
+        g.drawImage(images.mineSpritesheet, 0, 7 * Math.floor(gameObject.timeLeft/75), 7, 7, gameObject.position.x-center.x-scale/7, gameObject.position.y-center.y-scale/7, scale/3.5, scale/3.5);
+
+      // Draw Torpedos
+      } else if(gameObject.type === "torpedo"){
         g.save();
-        g.translate(torpedo.position.x-center.x, torpedo.position.y-center.y);
-        g.rotate(Math.atan2(-1*torpedo.heading.y, -1*torpedo.heading.x) + Math.PI*1.5);
-        g.drawImage(images.torpedoSpritesheet, 0, 30 * (Math.floor(torpedo.timeLeft/4)%3), 13, 30, (((scale/40)*8.6)/2)*-1, (((scale/40)*20)/2)*-1, (scale/40)*8.6, (scale/40)*20);
+        g.translate(gameObject.position.x-center.x, gameObject.position.y-center.y);
+        g.rotate(Math.atan2(-1*gameObject.heading.y, -1*gameObject.heading.x) + Math.PI*1.5);
+        g.drawImage(images.torpedoSpritesheet, 0, 30 * (Math.floor(gameObject.timeLeft/4)%3), 13, 30, (((scale/40)*8.6)/2)*-1, (((scale/40)*20)/2)*-1, (scale/40)*8.6, (scale/40)*20);
         g.restore();
-      }else{
+
+      // Draw Explosions
+      } else if(gameObject.type === "explosion"){
         g.fillStyle= "white";
         g.beginPath();
-        g.arc(torpedo.position.x-center.x, torpedo.position.y-center.y, scale*2.7/(torpedo.timeLeft+1), 0, 2 * Math.PI, false);
+        g.arc(gameObject.position.x-center.x, gameObject.position.y-center.y, scale*2.7/(gameObject.timeLeft+1), 0, 2 * Math.PI, false);
         g.fill();
       }
     });

@@ -3,6 +3,7 @@
 // Imports
 const config = require("../../config.js");
 const shortId = require('shortid');
+const Explosion = require("./Explosion.js");
 
 let mineObjects = {};
 
@@ -13,13 +14,14 @@ mineObjects.MineGun = function(player, ammo){
 }
 
 mineObjects.MineGun.prototype.fire = function(){
-  this.player.session.projectiles.mines.push(new mineObjects.Mine(this.player.public.position.clone(), this.player.private.velocity.clone()));
+  this.player.session.gameObjects.push(new mineObjects.Mine(this.player.public.position.clone(), this.player.private.velocity.clone()));
 }
 
 mineObjects.Mine = function(pos, vel){
   this.position = pos.add(vel);
   this.velocity = vel;
   this.timeLeft = config.mineTimer;
+  this.type = "mine";
 }
 
 mineObjects.Mine.prototype.logic = function(session){
@@ -28,14 +30,8 @@ mineObjects.Mine.prototype.logic = function(session){
   this.velocity.scale(1-(config.ambientFriction*config.mineFrictionMultiplier));
   this.timeLeft--;
   if(this.timeLeft <= 0){
-    session.projectiles.mines.splice(session.projectiles.mines.indexOf(this), 1);
-
-    // Collision Detection
-    session.players.forEach((player) => {
-      if(Math.hypot((this.position.x - player.public.position.x), (this.position.y - player.public.position.y)) < config.mineExplosionRadius){
-        player.removeHealth(config.mineDamage);
-      }
-    });
+    session.gameObjects.splice(session.gameObjects.indexOf(this), 1);
+    session.gameObjects.push(new Explosion(config.mineDamage, this.position, this.velocity));
   }
 }
 

@@ -3,6 +3,7 @@
 // Imports
 const config = require("../../config.js");
 const shortId = require('shortid');
+const Explosion = require("./Explosion.js");
 
 let torpedoObjects = {};
 
@@ -13,7 +14,7 @@ torpedoObjects.TorpedoGun = function(player, ammo){
 }
 
 torpedoObjects.TorpedoGun.prototype.fire = function(directionVector){
-  this.player.session.projectiles.torpedos.push(new torpedoObjects.Torpedo(this.player.public.position.clone(), this.player.private.velocity.clone().add(directionVector.clone().normalize().scale(config.torpedoSpeed)), directionVector));
+  this.player.session.gameObjects.push(new torpedoObjects.Torpedo(this.player.public.position.clone(), this.player.private.velocity.clone().add(directionVector.clone().normalize().scale(config.torpedoSpeed)), directionVector));
 }
 
 torpedoObjects.Torpedo = function(pos, vel, heading){
@@ -21,6 +22,7 @@ torpedoObjects.Torpedo = function(pos, vel, heading){
   this.velocity = vel;
   this.heading = heading;
   this.timeLeft = config.torpedoTimer;
+  this.type = "torpedo";
 }
 
 torpedoObjects.Torpedo.prototype.logic = function(session){
@@ -29,14 +31,8 @@ torpedoObjects.Torpedo.prototype.logic = function(session){
   this.velocity.scale(config.torpedoSpeedMultiplier);
   this.timeLeft--;
   if(this.timeLeft <= 0){
-    session.projectiles.torpedos.splice(session.projectiles.torpedos.indexOf(this), 1);
-
-    // Collision Detection
-    session.players.forEach((player) => {
-      if(Math.hypot((this.position.x - player.public.position.x), (this.position.y - player.public.position.y)) < config.torpedoExplosionRadius){
-        player.removeHealth(config.torpedoDamage);
-      }
-    });
+    session.gameObjects.splice(session.gameObjects.indexOf(this), 1);
+    session.gameObjects.push(new Explosion(config.torpedoDamage, this.position, this.velocity));
   }
 }
 

@@ -19,7 +19,6 @@ config.laserStartingAmmo = 20;
 
 // Mine
 config.mineTimer = 300;
-config.mineExplosionRadius = 120;
 config.mineStartingAmmo = 5;
 config.mineFrictionMultiplier = 2;
 config.mineDamage = 10;
@@ -27,9 +26,12 @@ config.mineDamage = 10;
 // Torpedo
 config.torpedoTimer = 50;
 config.torpedoSpeed = 10;
-config.torpedoExplosionRadius = 120;
 config.torpedoStartingAmmo = 5;
 config.torpedoSpeedMultiplier = 1.005;
 config.torpedoDamage = 6;
+
+// Explosion
+config.explosionRadius = 120;
+config.explosionLife = 10;
 
 module.exports = config;

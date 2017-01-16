@@ -7,11 +7,7 @@ const shortId = require('shortid');
 let Session = function(){
   this.id = shortId.generate();
   this.players = [];
-  this.projectiles = {
-    lasers: [],
-    mines: [],
-    torpedos: []
-  };
+  this.gameObjects = [];
   this.tick = setInterval(this.logic.bind(this), 10);
 }
 
@@ -38,7 +34,7 @@ Session.prototype.sendPackets = function(){
   this.players.forEach((playerToSendTo) => {
     playerToSendTo.socket.emit("server packet", {
       players: this.players.filter((x) => (x.public.id !== playerToSendTo.public.id)).map((x) => x.public),
-      projectiles: this.projectiles,
+      gameObjects: this.gameObjects,
       sessionID: this.id,
       you: {
         public: playerToSendTo.public,
@@ -68,16 +64,8 @@ Session.prototype.logic = function(){
     player.logic();
   });
 
-  this.projectiles.lasers.forEach((projectile) => {
-    projectile.logic(this);
-  });
-
-  this.projectiles.mines.forEach((projectile) => {
-    projectile.logic(this);
-  });
-
-  this.projectiles.torpedos.forEach((projectile) => {
-    projectile.logic(this);
+  this.gameObjects.forEach((object) => {
+    object.logic(this);
   });
 
   this.sendPackets();

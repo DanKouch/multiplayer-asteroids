@@ -13,13 +13,14 @@ laserObjects.LaserGun = function(player, ammo){
 }
 
 laserObjects.LaserGun.prototype.fire = function(directionVector){
-  this.player.session.projectiles.lasers.push(new laserObjects.Laser(this.player.public.position.clone(), this.player.private.velocity.clone().add(directionVector.clone().normalize().scale(config.laserSpeed))));
+  this.player.session.gameObjects.push(new laserObjects.Laser(this.player.public.position.clone(), this.player.private.velocity.clone().add(directionVector.clone().normalize().scale(config.laserSpeed))));
 }
 
 laserObjects.Laser = function(pos, vel){
   this.position = pos.add(vel);
   this.velocity = vel;
   this.health = config.laserHealth;
+  this.type = "laser";
 }
 
 laserObjects.Laser.prototype.logic = function(session){
@@ -27,14 +28,14 @@ laserObjects.Laser.prototype.logic = function(session){
   this.position.add(this.velocity);
   this.health--;
   if(this.health <= 0){
-    session.projectiles.lasers.splice(session.projectiles.lasers.indexOf(this), 1);
+    session.gameObjects.splice(session.gameObjects.indexOf(this), 1);
   }
 
   // Collision Detection
   session.players.forEach((player) => {
     if(Math.hypot((this.position.x - player.public.position.x), (this.position.y - player.public.position.y)) < 15){
       player.removeHealth(config.laserDamage);
-      session.projectiles.lasers.splice(session.projectiles.lasers.indexOf(this), 1);
+      session.gameObjects.splice(session.gameObjects.indexOf(this), 1);
     }
   });
 
